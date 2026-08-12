@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Teacher Classroom</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Learning Studio</p>
+          <h1>AI Teacher Orchestrator</h1>
+        </div>
+
+        <div class="menu-wrap">
+          <button id="aiMenuButton" class="ai-menu-button" type="button" aria-expanded="false" aria-controls="aiMenu">
+            <span class="menu-icon" aria-hidden="true">☰</span>
+            <span>AI Menu</span>
+          </button>
+
+          <div id="aiMenu" class="ai-menu" role="menu" aria-label="AI teacher menu">
+            <button class="menu-option selected" data-teacher="math" type="button" role="menuitem">
+              <span class="mini-avatar math">M</span>
+              <span>Math Teacher</span>
+            </button>
+            <button class="menu-option" data-teacher="physics" type="button" role="menuitem">
+              <span class="mini-avatar physics">P</span>
+              <span>Physics Teacher</span>
+            </button>
+            <button class="menu-option" data-teacher="science" type="button" role="menuitem">
+              <span class="mini-avatar science">S</span>
+              <span>Science Teacher</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main class="dashboard">
+        <aside class="agent-panel">
+          <div class="panel-header">
+            <p class="eyebrow">Agents</p>
+            <h2>Teacher controls</h2>
+          </div>
+
+          <div class="agent-list">
+            <button class="agent-toggle selected" data-teacher="math" type="button">
+              <span class="agent-meta">
+                <span class="avatar math">M</span>
+                <span>Math Teacher</span>
+              </span>
+              <span class="toggle-state on">ON</span>
+            </button>
+
+            <button class="agent-toggle" data-teacher="physics" type="button">
+              <span class="agent-meta">
+                <span class="avatar physics">P</span>
+                <span>Physics Teacher</span>
+              </span>
+              <span class="toggle-state off">OFF</span>
+            </button>
+
+            <button class="agent-toggle" data-teacher="science" type="button">
+              <span class="agent-meta">
+                <span class="avatar science">S</span>
+                <span>Science Teacher</span>
+              </span>
+              <span class="toggle-state off">OFF</span>
+            </button>
+          </div>
+        </aside>
+
+        <section class="chat-panel">
+          <div class="teacher-header">
+            <div>
+              <p class="status-label">Active teacher</p>
+              <h3 id="teacherName">Math Teacher</h3>
+            </div>
+            <span class="indicator" id="teacherBadge">Mathematics</span>
+          </div>
+
+          <div class="chat-window" id="chatWindow">
+            <div class="message bot">
+              <strong>Math Teacher:</strong>
+              <span>Ask me anything about numbers, patterns, formulas, or problem-solving, and I’ll explain it in a friendly way.</span>
+            </div>
+          </div>
+
+          <form id="teacherForm" class="input-area">
+            <textarea id="questionInput" rows="4" placeholder="Type your question here..." required></textarea>
+            <div class="actions">
+              <button type="submit">Ask the teacher</button>
+            </div>
+          </form>
+        </section>
+
+        <aside class="workflow-panel">
+          <div class="panel-header">
+            <p class="eyebrow">Trace</p>
+            <h2>Workflow</h2>
+          </div>
+
+          <ul class="workflow-trace">
+            <li class="trace-step active">Router received the question</li>
+            <li class="trace-step active">Teacher matching completed</li>
+            <li class="trace-step active">LLM request sent to Ollama</li>
+            <li class="trace-step">Answer recorded in agent memory</li>
+            <li class="trace-step">Manager review completed</li>
+          </ul>
+        </aside>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
