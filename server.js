@@ -7,6 +7,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const OLLAMA_BASE_URL = (process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434').replace(/\/$/, '');
 const OPENAI_BASE_URL = (process.env.OPENAI_API_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
+const VIBE_API_URL = (process.env.VIBE_API_URL || 'https://vibe-proxy-gqv4.onrender.com/v1/chat/completions').replace(/\/$/, '');
+const VIBE_API_KEY = process.env.VIBE_API_KEY || 'sk-vibe-summer-2026';
 const LLM_PROVIDER = (process.env.LLM_PROVIDER || 'ollama').toLowerCase();
 
 const teacherProfiles = {
@@ -95,7 +97,8 @@ async function parseJsonResponse(response) {
   try {
     return JSON.parse(text);
   } catch (error) {
-    throw new Error(`The model returned invalid JSON: ${error.message}`);
+    console.error('Failed to parse response as JSON:', text.substring(0, 200));
+    throw new Error(`Invalid JSON response: ${error.message}`);
   }
 }
 
@@ -116,13 +119,12 @@ async function callWithOllama(question, teacherKey, history = []) {
     })
   }, 120000);
 
-  const data = await parseJsonResponse(response).catch((error) => {
-    throw new Error(error.message);
-  });
-
   if (!response.ok) {
-    throw new Error(data?.error || `Ollama request failed with status ${response.status}`);
+    const text = await response.text();
+    throw new Error(`Ollama request failed with status ${response.status}: ${text.substring(0, 100)}`);
   }
+
+  const data = await parseJsonResponse(response);
 
   const answer = data?.message?.content?.trim();
   if (!answer) {
@@ -158,13 +160,12 @@ async function callOpenAI(question, teacherKey, history = []) {
     })
   }, 120000);
 
-  const data = await parseJsonResponse(response).catch((error) => {
-    throw new Error(error.message);
-  });
-
   if (!response.ok) {
-    throw new Error(data?.error?.message || `LLM request failed with status ${response.status}`);
+    const text = await response.text();
+    throw new Error(`OpenAI request failed with status ${response.status}: ${text.substring(0, 100)}`);
   }
+
+  const data = await parseJsonResponse(response);
 
   const answer = data?.choices?.[0]?.message?.content?.trim();
   if (!answer) {
@@ -174,7 +175,42 @@ async function callOpenAI(question, teacherKey, history = []) {
   return { answer, fallback: false };
 }
 
+async function callWithVibe(question, teacherKey, history = []) {
+  const messages = buildHistoryMessages(teacherKey, history);
+  messages.push({ role: 'user', content: question });
+
+  const response = await fetchWithTimeout(VIBE_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${VIBE_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: 'class-chat-model',
+      messages
+    })
+  }, 120000);
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Vibe API request failed with status ${response.status}: ${text.substring(0, 100)}`);
+  }
+
+  const data = await parseJsonResponse(response);
+
+  const answer = data?.choices?.[0]?.message?.content?.trim();
+  if (!answer) {
+    throw new Error('The Vibe API returned an empty response.');
+  }
+
+  return { answer, fallback: false };
+}
+
 async function callLiveLLM(question, teacherKey, history = []) {
+  if (LLM_PROVIDER === 'vibe') {
+    return await callWithVibe(question, teacherKey, history);
+  }
+
   if (LLM_PROVIDER === 'ollama') {
     try {
       return await callWithOllama(question, teacherKey, history);
@@ -228,9 +264,10 @@ app.post('/api/chat', async (req, res) => {
       history: conversationHistory[chosenTeacher]
     });
   } catch (error) {
+    const errorMessage = error?.message || 'Unknown error';
     res.status(500).json({
       error: 'LLM request failed.',
-      message: error.message
+      message: String(errorMessage).replace(/[\n\r]/g, ' ')
     });
   }
 });
@@ -244,4 +281,6 @@ app.listen(PORT, () => {
   console.log(`LLM provider: ${LLM_PROVIDER}`);
   console.log(`Ollama base URL: ${OLLAMA_BASE_URL}`);
   console.log(`OpenAI key configured: ${Boolean(process.env.OPENAI_API_KEY)}`);
+  console.log(`Vibe API URL: ${VIBE_API_URL}`);
+  console.log(`Vibe API key configured: ${Boolean(VIBE_API_KEY)}`);
 });
