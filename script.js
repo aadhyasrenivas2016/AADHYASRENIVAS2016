@@ -141,14 +141,18 @@ async function getLiveResponse(question, selectedTeacher) {
 
   const text = await response.text();
   if (!text) {
-    throw new Error('The AI server returned an empty response.');
+    throw new Error(`The AI server returned an empty response (HTTP ${response.status}).`);
   }
 
   let data;
   try {
     data = JSON.parse(text);
   } catch (error) {
-    throw new Error('The AI server returned invalid JSON.');
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+      throw new Error('The chat API returned an HTML page. Start the app with `npm start` and open http://localhost:3000.');
+    }
+    throw new Error(`The AI server returned invalid JSON (HTTP ${response.status}).`);
   }
 
   if (!response.ok) {
